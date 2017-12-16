@@ -1,0 +1,67 @@
+function ee_events_shortcode( $atts ) {
+    $events = EEM_Event::instance()->get_all(
+    	array(
+        	'order_by' => array( 'EVT_visible_on' => 'DESC' )
+    	)
+	);
+    
+     // content-header
+    echo "BEGIN:VCALENDAR" . "<br>";
+    echo "VERSION:2.0" . "<br>";
+    echo "PRODID:-//" . the_title() . "//NONSGML Events //EN" . "<br>";
+    echo "X-WR-CALNAME:" . the_title() . _e(' - Events','themeforce') . "<br>";
+    echo "X-ORIGINAL-URL:" . the_permalink() . "<br>";
+    echo "X-WR-CALDESC:" , the_title() . _e(' - Events','themeforce') . "<br>";
+    echo "CALSCALE:GREGORIAN" . "<br>";
+    
+	foreach( $events as $event ) {
+        global $post;
+    	//echo $event->name()."&nbsp;&nbsp;" . "<br>";
+        echo "BEGIN:VEVENT" . "<br>";
+        
+ 		// get the next upcoming start date from all the available datetimes
+		//$external_url = $post->EE_Event->external_url(); 
+        //echo "Event URL:" . $external_url . "<br>";
+        
+        $datetime_limit = $show_all_datetimes ? NULL : 1;
+        // Pull the datetimes for this event order by start_date/time
+        $datetimes = EEM_Datetime::instance()->get_datetimes_for_event_ordered_by_start_time( $event->ID, $show_expired, false, $datetime_limit );
+        // Reset the datetimes pointer to the earliest datetime and use that one.
+        $datetime = reset( $datetimes );
+            if ($datetime instanceof EE_Datetime) {
+                echo 'ID:' . $event->ID . '<br>';
+                echo 'Title:' . $event->post_title . '<br>';
+                echo 'Start Date:' . $datetime->get_raw( 'DTT_EVT_start' ) . '<br>';
+                echo 'End Date:' . $datetime->get_raw( 'DTT_EVT_end' ) . '<br>';
+ 	            // Loop over each datetime we have pulled from the database and output
+				foreach ($datetimes as $datetime) {
+					echo 'Datetime ID:' . $datetime->ID() . '<br>';
+                    echo 'Date:' . date_i18n( $date_format . ' ' . $time_format, strtotime( $datetime->start_date_and_time('Y-m-d', 'H:i:s') ) ) . '<br>';
+                    echo 'Date:' . date_i18n( $date_format, strtotime( $datetime->start_date('Y-m-d') ) ) . '<br>';
+                    echo 'Start Date:' . date_i18n( $time_format, strtotime( $datetime->start_time('H:i:s') ) ) . '<br>';
+                    echo 'End Date:' .  date_i18n( $time_format, strtotime( $datetime->end_time('H:i:s') ) ) . '<br>';
+                //end foreach $datetimes
+                };
+            };
+        
+		//$geteventdate = $event->first_datetime(); 
+        //$eventdate = date('Y-m-d H:i:s', strtotime($geteventdate->start_date()));
+        //echo "DTSTART:" . $eventdate . "<br>"; 
+        //echo "DTSTART:";
+        //do_shortcode( '[TIME_START]' );
+        //echo "<br>";
+        //do_shortcode( '[ESPRESSO_EVENTS_TABLE_TEMPLATE show_all_datetimes=TRUE]' );
+        //echo "<br>";
+      
+        
+        //echo "DTEND:" . "" . "<br>";
+        //echo "DTEND:" . $event->get('DTT_EVT_end'). "<br>";
+        echo "SUMMARY:" . $event->name() . "<br>";
+        echo "DESCRIPTION:" . $event->name() . "<br>";
+        //echo "DESCRIPTION:" . $event->description() . "<br>";
+        echo "END:VEVENT" . "<br>";
+        $startdate = "";
+	}
+echo "END:VCALENDAR" . "<br>";
+}
+add_shortcode( 'ee_events_shortcode_output', 'ee_events_shortcode');
